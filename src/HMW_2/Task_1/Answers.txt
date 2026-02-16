@@ -1,0 +1,64 @@
+Питання 1
+Основні порушення:
+
+1) Програмні сутності повинні бути відкриті для розширення, але закриті для модифікації.
+Щоразу, коли ми хочемо додати нового монстра, ми змушені змінювати клас GameScene. Ми мусимо дописати новий List, новий
+case у switch та новий цикл у метод start. Це створює ризик зламати існуючий код.
+
+2) Модулі вищого рівня не повинні залежати від модулів нижчого рівня. Обидва повинні залежати від абстракцій.
+Клас GameScene (вищий рівень) безпосередньо залежить від конкретних класів Zombie, Imp, Demon. Він знає про їх
+існування та деталі реалізації.
+
+3) GameScene робить забагато: він зберігає стан гри, керує логікою створення об'єктів та керує ігровим циклом (start).
+
+4) Логіка shoot() дублюється в кожному класі монстра. Списки в GameScene дублюються. Цикли запуску дублюються.
+
+
+
+Питання 2
+Додавати нові типи монстрів складно та небезпечно.
+Доведеться редагувати 3 місця в існуючому коді, що порушує стабільність системи.
+Як додати Какодемона (в поточному "поганому" стилі):
+Створити клас Cacodemon.
+Додати CACODEMON в MonsterType.
+Змінити GameScene:
+
+// 1. Створити клас
+public class Cacodemon {
+    private final String level;
+    public Cacodemon(String level) { this.level = level; }
+    public void shoot() { System.out.printf("Creature: %s shoots fireball!\n", "Cacodemon"); }
+}
+
+// 2. Зміни в GameScene
+public class GameScene {
+    // ... існуючі списки
+    private final List<Cacodemon> cacodemons = new ArrayList<>(); // <-- ЗМІНА 1
+
+    public void addMonster(MonsterType type) {
+        switch (type) {
+            // ... існуючі кейси
+            case CACODEMON: // <-- ЗМІНА 2
+                 cacodemons.add(new Cacodemon(level));
+                 break;
+        }
+    }
+
+    public void start() {
+        // ... існуючі цикли
+        for (Cacodemon c : cacodemons) c.shoot(); // <-- ЗМІНА 3
+    }
+}
+
+
+
+Питання 3
+Щоб виправити ситуацію, потрібно застосувати Поліморфізм.
+
+1) Створити загальний інтерфейс Monster або абстрактний клас AbstractMonster з методом shoot().
+
+2) Усі монстри (Zombie, Imp тощо) повинні імплементувати цей інтерфейс.
+
+3) У класі GameScene замінити купу списків List<Zombie>, List<Imp> на один список List<Monster>.
+
+4) Винести логіку створення (switch) в окремий клас MonsterFactory (Pattern Factory), щоб очистити GameScene.
